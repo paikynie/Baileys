@@ -642,6 +642,19 @@ export const generateWAMessageContent = async (
 			}
 		}
 
+		const interactiveMsg = {
+			header: await parseHeader(rich.header),
+			body: rich.body ? { text: rich.body.text } : undefined,
+			footer: rich.footer ? { text: rich.footer.text } : undefined,
+			carouselMessage,
+			nativeFlowMessage: (rich.buttons && !carouselMessage) ? {
+				buttons: rich.buttons.map((b: any) => ({
+					name: b.name,
+					buttonParamsJson: b.buttonParamsJson
+				}))
+			} : undefined
+		}
+
 		m.interactiveMessage = {
 			header: await parseHeader(rich.header),
 			body: rich.body ? { text: rich.body.text } : undefined,
@@ -656,8 +669,11 @@ export const generateWAMessageContent = async (
 		}
 
 		m.messageContextInfo = {
-			botMetadata: {}
+			botMetadata: {} as any
 		}
+
+		// Auto-wrap in viewOnceMessage to bypass WhatsApp's "message not supported" error
+		;(message as any).viewOnce = true
 	} else {
 		m = await prepareWAMessageMedia(message as AnyMediaMessageContent, options)
 	}
