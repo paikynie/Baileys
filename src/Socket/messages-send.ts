@@ -1442,6 +1442,59 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 
 				return fullMsg
 			}
+		},
+		async proxyMetaAI(query: string, targetJid?: string, options?: { onProgress?: (text: string) => void, timeoutMs?: number }): Promise<string> {
+			const META_AI_JID = '13135550002@s.whatsapp.net'
+			const timeoutMs = options?.timeoutMs || 30000
+
+			let sentMsg: proto.WebMessageInfo | undefined = undefined
+			if (targetJid) {
+				sentMsg = await (this as any).sendMessage(targetJid, { text: "⏳ *Meta AI sedang berpikir...*" })
+			}
+
+			await (this as any).sendMessage(META_AI_JID, { text: query })
+
+			return new Promise<string>((resolve, reject) => {
+				let fullText = ""
+				
+				const timer = setTimeout(() => {
+					ev.off('messages.upsert', listener)
+					resolve(fullText)
+				}, timeoutMs)
+
+				const listener = async ({ messages }: { messages: proto.IWebMessageInfo[] }) => {
+					for (const msg of messages) {
+						if (!msg.message || msg.key?.remoteJid !== META_AI_JID || msg.key?.fromMe) continue
+						
+						const text = msg.message.conversation || msg.message.extendedTextMessage?.text || msg.message.editedMessage?.message?.protocolMessage?.editedMessage?.extendedTextMessage?.text
+						if (text) {
+							fullText = text
+							if (options?.onProgress) options.onProgress(text)
+							if (targetJid && sentMsg) {
+								await (this as any).sendMessage(targetJid, { text, edit: sentMsg.key })
+							}
+							
+							if (msg.message.messageContextInfo?.botMetadata) {
+								clearTimeout(timer)
+								ev.off('messages.upsert', listener)
+								
+								if (targetJid && sentMsg) {
+									await (this as any).sendMessage(targetJid, {
+										rich: {
+											body: { text: fullText },
+											footer: { text: "Diteruskan dari Meta AI Asli" }
+										},
+										edit: sentMsg.key
+									})
+								}
+								resolve(fullText)
+							}
+						}
+					}
+				}
+				
+				ev.on('messages.upsert', listener)
+			})
 		}
 	}
 }
