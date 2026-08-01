@@ -6,8 +6,78 @@
 
 <div align='center'>
   Baileys is a WebSockets-based TypeScript library for interacting with the WhatsApp Web API.<br>
-  <b>✨ This special fork contains the exclusive fix for the WhatsApp Username Bug (Issue #2742) ✨</b>
+  <b>✨ This special fork contains exclusive features: AIRich, Advanced Status & proxyMetaAI ✨</b><br><br>
+  <a href="./FEATURES.md"><strong>📖 Lihat Dokumentasi Lengkap Fitur Fork →</strong></a>
 </div>
+
+---
+
+## 🌟 Exclusive Fork Features (by Tuan Pai & Antigravity)
+
+This custom fork of Baileys includes several cutting-edge features that bypass WhatsApp's recent protocol limitations, allowing you to use advanced UI elements directly from your bot code.
+
+### 1. `AIRich` (Meta AI Interactive Messages & Buttons)
+WhatsApp recently blocked Interactive Messages (Buttons, Carousels) for non-official business accounts (showing the "Message not supported" error). **This fork automatically bypasses this limit** by stealthily wrapping interactive messages inside `viewOnceMessage` and injecting `botMetadata` to trigger the elegant gray UI used by Meta AI!
+
+**How to use:**
+```typescript
+await sock.sendMessage(jid, {
+    rich: {
+        header: { title: "🤖 Halo, Tuan Pai!" },
+        body: { text: "Pilih menu di bawah ini:" },
+        footer: { text: "Ditenagai oleh Antigravity" },
+        // Native Flow Buttons (Interactive)
+        buttons: [
+            { name: "quick_reply", buttonParamsJson: JSON.stringify({ display_text: "Menu Utama", id: "menu_1" }) },
+            { name: "cta_url", buttonParamsJson: JSON.stringify({ display_text: "Website", url: "https://paikynie.com" }) }
+        ]
+    }
+})
+```
+
+### 2. Advanced Status Wrapper (Close Friends, Group Status & Custom Backgrounds)
+Easily send custom text statuses with RGB backgrounds, or broadcast statuses specifically to Close Friends (Lingkaran Hijau) and Group Status (Lingkaran Biru Tua) without needing external npm modules.
+
+**How to use:**
+```typescript
+await sock.sendMessage('status@broadcast', {
+    status: {
+        text: "Sssst.. ini rahasia, cuma Close Friends yang bisa baca!",
+        color: '#FF000000', // Black background
+        font: 3, 
+        audience: 'close_friends' // Options: 'all' | 'close_friends' | 'group'
+    }
+}, {
+    statusJidList: ['628xxxxxxx@s.whatsapp.net', '628yyyyyyy@s.whatsapp.net']
+})
+```
+
+### 3. `proxyMetaAI` (Hack: Bypass & Hijack Official Meta AI)
+Want to give your bot the brains of Meta AI for free? If the phone number connected to this Baileys instance has Meta AI unlocked on WhatsApp, you can use `sock.proxyMetaAI()` to silently forward user questions to the official Meta AI bot, wait for the reply, and visually stream the answer back to your users in real-time!
+
+**How to use:**
+```typescript
+sock.ev.on('messages.upsert', async ({ messages }) => {
+    const msg = messages[0]
+    const text = msg.message?.conversation || msg.message?.extendedTextMessage?.text || ""
+    const sender = msg.key.remoteJid
+
+    // User types: ".meta How to cook rice?"
+    if (text.startsWith('.meta ')) {
+        const query = text.replace('.meta ', '')
+        
+        // Let Baileys do all the heavy lifting!
+        // 1. Sends "Thinking..." to the group
+        // 2. Secretly asks Meta AI in DM
+        // 3. Streams Meta AI's "typing" animation back to your group!
+        // 4. Applies the elegant 'rich' UI when finished.
+        const answer = await sock.proxyMetaAI(query, sender)
+        console.log("Meta AI answered:", answer)
+    }
+})
+```
+
+---
 > [!CAUTION]
 > NOTICE OF BREAKING CHANGE.
 >
