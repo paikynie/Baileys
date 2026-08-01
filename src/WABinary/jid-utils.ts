@@ -63,7 +63,17 @@ export const jidDecode = (jid: string | undefined): FullJid | undefined => {
 	const userCombined = jid!.slice(0, sepIdx)
 
 	const [userAgent, device] = userCombined.split(':')
-	const [user, agent] = userAgent!.split('_')
+
+	let user = userAgent!
+	let agent: string | undefined
+	const lastUnderscoreIdx = userAgent!.lastIndexOf('_')
+	if (lastUnderscoreIdx !== -1) {
+		const possibleAgent = userAgent!.slice(lastUnderscoreIdx + 1)
+		if (/^\d+$/.test(possibleAgent)) {
+			user = userAgent!.slice(0, lastUnderscoreIdx)
+			agent = possibleAgent
+		}
+	}
 
 	let domainType = WAJIDDomains.WHATSAPP
 	if (server === 'lid') {
