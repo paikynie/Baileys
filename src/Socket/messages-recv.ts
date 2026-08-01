@@ -1584,6 +1584,36 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 
 	const handleMessage = async (node: BinaryNode) => {
 		const encNode = getBinaryNodeChild(node, 'enc')
+		const tcTokenNode = getBinaryNodeChild(node, 'tctoken')
+		if (tcTokenNode && tcTokenNode.content instanceof Uint8Array) {
+			try {
+				const rawJid = jidNormalizedUser(node.attrs.from)
+				if (isPnUser(rawJid) || isLidUser(rawJid)) {
+					const storageJid = await resolveTcTokenJid(rawJid, getLIDForPN)
+					const existingTcData = await authState.keys.get('tctoken', [storageJid])
+					const existingEntry = existingTcData[storageJid]
+
+					const existingTs = existingEntry?.timestamp ? Number(existingEntry.timestamp) : 0
+					const incomingTs = tcTokenNode.attrs.t ? Number(tcTokenNode.attrs.t) : 0
+
+					if (incomingTs && existingTs < incomingTs) {
+						await authState.keys.set({
+							tctoken: {
+								[storageJid]: {
+									...existingEntry,
+									token: Buffer.from(tcTokenNode.content),
+									timestamp: tcTokenNode.attrs.t
+								}
+							}
+						})
+						trackTcTokenJid(storageJid)
+						logger.debug({ jid: storageJid }, 'stored tctoken from incoming message')
+					}
+				}
+			} catch (err: any) {
+				logger.warn({ err: err?.message }, 'failed to store tctoken from incoming message')
+			}
+		}
 		// TODO: temporary fix for crashes and issues resulting of failed msmsg decryption
 		if (encNode?.attrs.type === 'msmsg') {
 			logger.debug({ key: node.attrs.key }, 'ignored msmsg')
