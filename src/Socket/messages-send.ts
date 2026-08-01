@@ -1318,7 +1318,29 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 			])
 
 			if (error) {
-				throw error
+				const err = error as Error
+				if (
+					err.message.includes('Unsupported state') ||
+					err.message.includes('authenticate data') ||
+					err.message.includes('bad decrypt') ||
+					err.message.includes('Media re-upload failed')
+				) {
+					logger.info({ key: message.key }, 'media retry failed, falling back to placeholder resend')
+					const payload: proto.Message.IPeerDataOperationRequestMessage = {
+						peerDataOperationRequestType: proto.Message.PeerDataOperationRequestType.PLACEHOLDER_MESSAGE_RESEND,
+						placeholderMessageResendRequest: [
+							{
+								messageKey: message.key
+							}
+						]
+					}
+					await sendPeerDataOperationMessage(payload)
+					throw new Boom('Media re-upload failed, requested placeholder resend instead', {
+						statusCode: 412,
+						data: err
+					})
+				}
+				throw err
 			}
 
 			ev.emit('messages.update', [{ key: message.key, update: { message: message.message } }])
