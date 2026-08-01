@@ -607,6 +607,46 @@ export const generateWAMessageContent = async (
 				initiatedByMe: true
 			}
 		}
+	} else if (hasNonNullishProperty(message, 'status')) {
+		const { status } = message
+		let mediaMessage: WAMessageContent = {}
+		
+		if (status.image) {
+			mediaMessage = await prepareWAMessageMedia({ image: status.image }, options)
+		} else if (status.video) {
+			mediaMessage = await prepareWAMessageMedia({ video: status.video }, options)
+		} else {
+			const extContent = { text: status.text || '' } as WATextMessage
+			if (status.color) {
+				extContent.backgroundArgb = await assertColor(status.color)
+			}
+			if (status.font) {
+				extContent.font = status.font
+			}
+			mediaMessage.extendedTextMessage = extContent
+		}
+
+		m = mediaMessage
+
+		if (!m.extendedTextMessage && (status.color || status.font)) {
+			// Attach background colors to media caption if possible
+			if (m.imageMessage) (m.imageMessage as any).backgroundArgb = status.color ? await assertColor(status.color) : undefined
+			if (m.videoMessage) (m.videoMessage as any).backgroundArgb = status.color ? await assertColor(status.color) : undefined
+		}
+
+		if (status.audience) {
+			const extraContext: any = {}
+			if (status.audience === 'close_friends') {
+				extraContext.statusAudienceMetadata = {
+					audienceType: 1 // CLOSE_FRIENDS
+				}
+			} else if (status.audience === 'group') {
+				extraContext.isGroupStatus = true
+			}
+			
+			message.contextInfo = { ...(message.contextInfo || {}), ...extraContext }
+		}
+
 	} else if ('rich' in message && message.rich) {
 		const rich = (message as any).rich
 

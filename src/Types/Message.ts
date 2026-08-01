@@ -274,6 +274,24 @@ export type InteractiveMessageContent = {
 	}
 }
 
+export type StatusMessageContent = {
+	/** Advanced Status (Story) features */
+	status: {
+		/** Text content for the status */
+		text?: string
+		/** Image content */
+		image?: WAMediaUpload
+		/** Video content */
+		video?: WAMediaUpload
+		/** Background color in ARGB format (e.g., '#FFFF0000' for red). Only applies to text status. */
+		color?: string
+		/** Font type (1-5). Only applies to text status. */
+		font?: number
+		/** Target audience type */
+		audience?: 'all' | 'close_friends' | 'group'
+	}
+} & Contextable
+
 export type AnyRegularMessageContent = (
 	| ({
 			text: string
@@ -283,6 +301,7 @@ export type AnyRegularMessageContent = (
 			Editable)
 	| AnyMediaMessageContent
 	| InteractiveMessageContent
+	| StatusMessageContent
 	| { event: EventMessageOptions }
 	| ({
 			poll: PollMessageOptions
