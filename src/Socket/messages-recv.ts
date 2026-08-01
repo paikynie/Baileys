@@ -1513,7 +1513,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 								'messages.update',
 								ids.map(id => ({
 									key: { ...key, id },
-									update: { status, messageTimestamp: toNumber(+(attrs.t ?? 0)) }
+									update: { status }
 								}))
 							)
 						}
