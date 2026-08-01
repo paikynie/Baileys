@@ -607,8 +607,59 @@ export const generateWAMessageContent = async (
 				initiatedByMe: true
 			}
 		}
+	} else if ('rich' in message && message.rich) {
+		const rich = (message as any).rich
+
+		const parseHeader = async (h?: any) => {
+			if (!h) return undefined
+			let media: any = {}
+			if (h.image) media = { imageMessage: (await prepareWAMessageMedia({ image: h.image } as any, options)).imageMessage }
+			else if (h.video) media = { videoMessage: (await prepareWAMessageMedia({ video: h.video } as any, options)).videoMessage }
+			else if (h.document) media = { documentMessage: (await prepareWAMessageMedia({ document: h.document, mimetype: h.document.mimetype, fileName: h.document.fileName } as any, options)).documentMessage }
+
+			return {
+				title: h.title,
+				subtitle: h.subtitle,
+				hasMediaAttachment: h.hasMediaAttachment || Object.keys(media).length > 0,
+				...media
+			}
+		}
+
+		let carouselMessage: any = undefined
+		if (rich.cards && rich.cards.length > 0) {
+			carouselMessage = {
+				cards: await Promise.all(rich.cards.map(async (c: any) => ({
+					header: await parseHeader(c.header),
+					body: c.body ? { text: c.body.text } : undefined,
+					footer: c.footer ? { text: c.footer.text } : undefined,
+					nativeFlowMessage: c.buttons ? {
+						buttons: c.buttons.map((b: any) => ({
+							name: b.name,
+							buttonParamsJson: b.buttonParamsJson
+						}))
+					} : undefined
+				})))
+			}
+		}
+
+		m.interactiveMessage = {
+			header: await parseHeader(rich.header),
+			body: rich.body ? { text: rich.body.text } : undefined,
+			footer: rich.footer ? { text: rich.footer.text } : undefined,
+			carouselMessage,
+			nativeFlowMessage: (rich.buttons && !carouselMessage) ? {
+				buttons: rich.buttons.map((b: any) => ({
+					name: b.name,
+					buttonParamsJson: b.buttonParamsJson
+				}))
+			} : undefined
+		}
+
+		m.messageContextInfo = {
+			botMetadata: {}
+		}
 	} else {
-		m = await prepareWAMessageMedia(message, options)
+		m = await prepareWAMessageMedia(message as AnyMediaMessageContent, options)
 	}
 
 	if (hasOptionalProperty(message, 'viewOnce') && !!message.viewOnce) {

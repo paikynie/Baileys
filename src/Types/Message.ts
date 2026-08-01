@@ -229,6 +229,51 @@ export type WASendableProduct = Omit<proto.Message.ProductMessage.IProductSnapsh
 	productImage: WAMediaUpload
 }
 
+export type InteractiveButton = {
+	name: 'quick_reply' | 'cta_url' | 'cta_call' | 'cta_copy' | 'cta_reminder' | 'cta_cancel_reminder' | 'address_message' | 'send_location' | 'review_and_pay'
+	buttonParamsJson: string
+}
+
+export type InteractiveMessageContent = {
+	/** Enable Meta AI style rich message UI */
+	rich?: {
+		header?: {
+			title?: string
+			subtitle?: string
+			hasMediaAttachment?: boolean
+			image?: WAMediaUpload
+			video?: WAMediaUpload
+			document?: WAMediaUpload & { mimetype?: string; fileName?: string }
+		}
+		body?: {
+			text?: string
+		}
+		footer?: {
+			text?: string
+		}
+		/** Interactive buttons (Native Flow) */
+		buttons?: InteractiveButton[]
+		/** Carousel cards */
+		cards?: Array<{
+			header?: {
+				title?: string
+				subtitle?: string
+				hasMediaAttachment?: boolean
+				image?: WAMediaUpload
+				video?: WAMediaUpload
+				document?: WAMediaUpload & { mimetype?: string; fileName?: string }
+			}
+			body?: {
+				text?: string
+			}
+			footer?: {
+				text?: string
+			}
+			buttons?: InteractiveButton[]
+		}>
+	}
+}
+
 export type AnyRegularMessageContent = (
 	| ({
 			text: string
@@ -237,6 +282,7 @@ export type AnyRegularMessageContent = (
 			Contextable &
 			Editable)
 	| AnyMediaMessageContent
+	| InteractiveMessageContent
 	| { event: EventMessageOptions }
 	| ({
 			poll: PollMessageOptions
