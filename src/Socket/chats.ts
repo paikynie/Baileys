@@ -295,6 +295,11 @@ export const makeChatsSocket = (config: SocketConfig) => {
 		}
 	}
 
+	/**
+	 * Fetches the default disappearing mode for the given users.
+	 * Note: This queries the user's default setting for new chats, NOT the current setting of an existing chat.
+	 * For existing private chats, you must rely on your local store (e.g. store.chats.get(jid)?.ephemeralExpiration).
+	 */
 	const fetchDisappearingDuration = async (...jids: string[]) => {
 		const usyncQuery = new USyncQuery().withDisappearingModeProtocol()
 

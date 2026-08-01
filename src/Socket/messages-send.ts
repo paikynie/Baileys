@@ -1364,6 +1364,12 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 						: disappearingMessagesInChat
 				await groupToggleEphemeral(jid, value)
 			} else {
+				if (!options.ephemeralExpiration && config.getCachedChat) {
+					const cachedChat = await config.getCachedChat(jid)
+					if (cachedChat?.ephemeralExpiration) {
+						options.ephemeralExpiration = cachedChat.ephemeralExpiration
+					}
+				}
 				const fullMsg = await generateWAMessage(jid, content, {
 					logger,
 					userJid,

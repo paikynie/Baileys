@@ -3,6 +3,7 @@ import type { URL } from 'url'
 import { proto } from '../../WAProto/index.js'
 import type { ILogger } from '../Utils/logger'
 import type { AuthenticationState, LIDMapping, SignalAuthState, TransactionCapabilityOptions } from './Auth'
+import type { Chat } from './Chat'
 import type { GroupMetadata } from './GroupMetadata'
 import { type MediaConnInfo, type WAMessageKey } from './Message'
 import type { SignalRepositoryWithLIDStore } from './Signal'
@@ -144,6 +145,9 @@ export type SocketConfig = {
 
 	/** cached group metadata, use to prevent redundant requests to WA & speed up msg sending */
 	cachedGroupMetadata: (jid: string) => Promise<GroupMetadata | undefined>
+
+	/** cached chat metadata, use to retrieve ephemeral settings for private chats */
+	getCachedChat?: (jid: string) => Promise<Chat | undefined> | Chat | undefined
 
 	makeSignalRepository: (
 		auth: SignalAuthState,
